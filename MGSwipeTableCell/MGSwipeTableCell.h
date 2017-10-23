@@ -254,6 +254,7 @@ typedef NS_ENUM(NSInteger, MGSwipeEasingFunction) {
 @property (nonatomic, strong, nullable) UIColor * swipeBackgroundColor;
 /** Property to read or change the current swipe offset programmatically */
 @property (nonatomic, assign) CGFloat swipeOffset;
+@property (nonatomic) UIPanGestureRecognizer * panRecognizer;
 
 /** Utility methods to show or hide swipe buttons programmatically */
 - (void)animatedSwipeOffset:(CGFloat) newOffset;

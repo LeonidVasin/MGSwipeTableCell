@@ -548,7 +548,6 @@ static inline CGFloat mgEaseInOutBounce(CGFloat t, CGFloat b, CGFloat c) {
 @implementation MGSwipeTableCell
 {
     UITapGestureRecognizer * _tapRecognizer;
-    UIPanGestureRecognizer * _panRecognizer;
     CGPoint _panStartPoint;
     CGFloat _panStartOffset;
     CGFloat _targetOffset;

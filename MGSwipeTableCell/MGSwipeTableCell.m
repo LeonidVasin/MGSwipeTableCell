@@ -989,6 +989,78 @@ static inline CGFloat mgEaseInOutBounce(CGFloat t, CGFloat b, CGFloat c) {
 }
 
 #pragma mark Swipe Animation
+    
+- (void)animatedSwipeOffset:(CGFloat) newOffset {
+    CGFloat sign = newOffset > 0 ? 1.0 : -1.0;
+    MGSwipeButtonsView * activeButtons = sign < 0 ? _rightView : _leftView;
+    MGSwipeSettings * activeSettings = sign < 0 ? _rightSwipeSettings : _leftSwipeSettings;
+    
+    if(activeSettings.enableSwipeBounces) {
+        _swipeOffset = newOffset;
+        
+        CGFloat maxUnbouncedOffset = sign * activeButtons.bounds.size.width;
+        
+        if ((sign > 0 && newOffset > maxUnbouncedOffset) || (sign < 0 && newOffset < maxUnbouncedOffset)) {
+            _swipeOffset = maxUnbouncedOffset + (newOffset - maxUnbouncedOffset) * activeSettings.swipeBounceRate;
+        }
+    }
+    else {
+        CGFloat maxOffset = sign * activeButtons.bounds.size.width;
+        _swipeOffset = sign > 0 ? MIN(newOffset, maxOffset) : MAX(newOffset, maxOffset);
+    }
+    CGFloat offset = fabs(_swipeOffset);
+    
+    
+    if (!activeButtons || offset == 0) {
+        if (_leftView)
+        [_leftView endExpansionAnimated:NO];
+        if (_rightView)
+        [_rightView endExpansionAnimated:NO];
+        [self hideSwipeOverlayIfNeeded];
+        _targetOffset = 0;
+        [self updateState:MGSwipeStateNone];
+        return;
+    }
+    else {
+        [self showSwipeOverlayIfNeeded];
+        CGFloat swipeThreshold = activeSettings.threshold;
+        BOOL keepButtons = activeSettings.keepButtonsSwiped;
+        _targetOffset = keepButtons && offset > activeButtons.bounds.size.width * swipeThreshold ? activeButtons.bounds.size.width * sign : 0;
+    }
+    
+    BOOL onlyButtons = activeSettings.onlySwipeButtons;
+    _swipeView.transform = CGAffineTransformMakeTranslation(onlyButtons ? 0 : _swipeOffset, 0);
+    
+    //animate existing buttons
+    MGSwipeButtonsView* but[2] = {_leftView, _rightView};
+    MGSwipeSettings* settings[2] = {_leftSwipeSettings, _rightSwipeSettings};
+    MGSwipeExpansionSettings * expansions[2] = {_leftExpansion, _rightExpansion};
+    
+    for (int i = 0; i< 2; ++i) {
+        MGSwipeButtonsView * view = but[i];
+        if (!view) continue;
+        
+        //buttons view position
+        CGFloat translation = MIN(offset, view.bounds.size.width) * sign + settings[i].offset * sign;
+        view.transform = CGAffineTransformMakeTranslation(translation, 0);
+        
+        if (view != activeButtons) continue; //only transition if active (perf. improvement)
+        bool expand = expansions[i].buttonIndex >= 0 && offset > view.bounds.size.width * expansions[i].threshold;
+        if (expand) {
+            [view expandToOffset:offset settings:expansions[i]];
+            _targetOffset = expansions[i].fillOnTrigger ? self.bounds.size.width * sign : 0;
+            _activeExpansion = view;
+            [self updateState:i ? MGSwipeStateExpandingRightToLeft : MGSwipeStateExpandingLeftToRight];
+        }
+        else {
+            [view endExpansionAnimated:YES];
+            _activeExpansion = nil;
+            CGFloat t = MIN(1.0f, offset/view.bounds.size.width);
+            [view transition:settings[i].transition percent:t];
+            [self updateState:i ? MGSwipeStateSwipingRightToLeft : MGSwipeStateSwipingLeftToRight];
+        }
+    }
+}
 
 - (void)setSwipeOffset:(CGFloat) newOffset;
 {

@@ -256,6 +256,7 @@ typedef NS_ENUM(NSInteger, MGSwipeEasingFunction) {
 @property (nonatomic, assign) CGFloat swipeOffset;
 
 /** Utility methods to show or hide swipe buttons programmatically */
+- (void)animatedSwipeOffset:(CGFloat) newOffset;
 -(void) hideSwipeAnimated: (BOOL) animated;
 -(void) hideSwipeAnimated: (BOOL) animated completion:(nullable void(^)(BOOL finished)) completion;
 -(void) showSwipe: (MGSwipeDirection) direction animated: (BOOL) animated;
